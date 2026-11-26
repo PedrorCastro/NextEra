@@ -19,7 +19,6 @@ public class TicketTest {
         ticket = new Ticket(
             "Erro no login",
             "Não consigo acessar minha conta",
-            TicketStatus.ABERTO,
             TicketPrioridade.ALTA,
             clienteId
         );
@@ -34,7 +33,20 @@ public class TicketTest {
         assertEquals(TicketPrioridade.ALTA, ticket.getPrioridade());
         assertEquals(clienteId, ticket.getClienteId());
         assertNotNull(ticket.getCriadoEm());
+        assertEquals(ticket.getCriadoEm(), ticket.getAtualizadoEm());
         assertNull(ticket.getAnalistaId());
+    }
+
+    @Test
+    public void deveRejeitarDadosObrigatoriosInvalidosNaCriacao() {
+        assertThrows(IllegalArgumentException.class, () ->
+            new Ticket(" ", "Descrição válida", TicketPrioridade.ALTA, clienteId));
+        assertThrows(IllegalArgumentException.class, () ->
+            new Ticket("Título válido", null, TicketPrioridade.ALTA, clienteId));
+        assertThrows(IllegalArgumentException.class, () ->
+            new Ticket("Título válido", "Descrição válida", null, clienteId));
+        assertThrows(IllegalArgumentException.class, () ->
+            new Ticket("Título válido", "Descrição válida", TicketPrioridade.ALTA, null));
     }
 
     @Test
@@ -72,6 +84,7 @@ public class TicketTest {
         ticket.aguardarCliente();
         assertEquals(TicketStatus.AGUARDANDO_CLIENTE, ticket.getStatus());
         assertNotNull(ticket.getAguardandoClienteEm());
+        assertEquals(ticket.getAguardandoClienteEm(), ticket.getAtualizadoEm());
 
         ticket.retomarAtendimento();
         assertEquals(TicketStatus.EM_ANDAMENTO, ticket.getStatus());
@@ -83,6 +96,14 @@ public class TicketTest {
         ticket.fecharTicket();
         assertEquals(TicketStatus.FECHADO, ticket.getStatus());
         assertNotNull(ticket.getFechadoEm());
+        assertEquals(ticket.getFechadoEm(), ticket.getAtualizadoEm());
+    }
+
+    @Test
+    public void deveIniciarAtendimentoSomenteQuandoTicketEstaAberto() {
+        ticket.iniciarAtendimento();
+        assertThrows(IllegalStateException.class, () -> ticket.iniciarAtendimento());
+        assertEquals(TicketStatus.EM_ANDAMENTO, ticket.getStatus());
     }
 
     @Test
