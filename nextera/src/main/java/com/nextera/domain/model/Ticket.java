@@ -2,7 +2,6 @@ package com.nextera.domain.model;
 import java.time.Instant;
 import java.util.UUID;
 
-@Model
 public class Ticket {
     private UUID id;
     private String titulo;
@@ -17,17 +16,16 @@ public class Ticket {
     private Instant resolvidoEm;
     private Instant aguardandoClienteEm;
 
-    public Ticket(UUID id, String titulo, String descricao, TicketStatus status, TicketPrioridade prioridade, UUID clienteId, UUID analistaId, Instant criadoEm, Instant atualizadoEm, Instant fechadoEm) {
-        this.id = id;
+    public Ticket(String titulo, String descricao,
+                TicketStatus status, TicketPrioridade prioridade,
+                UUID clienteId) {
+        this.id = UUID.randomUUID();
         this.titulo = titulo;
         this.descricao = descricao;
-        this.status = status;
+        this.status = TicketStatus.ABERTO;
         this.prioridade = prioridade;
         this.clienteId = clienteId;
-        this.analistaId = analistaId;
-        this.criadoEm = criadoEm;
-        this.atualizadoEm = atualizadoEm;
-        this.fechadoEm = fechadoEm;
+        this.criadoEm = Instant.now();
     }
 
 
@@ -35,19 +33,19 @@ public class Ticket {
     public UUID getId() {
         return id;
     }
-    public void setId(UUID id) {
+    private void setId(UUID id) {
         this.id = id;
     }
     public String getTitulo() {
         return titulo;
     }
-    public void setTitulo(String titulo) {
+    private void setTitulo(String titulo) {
         this.titulo = titulo;
     }
     public String getDescricao() {
         return descricao;
     }
-    public void setDescricao(String descricao) {
+    private void setDescricao(String descricao) {
         this.descricao = descricao;
     }
     public TicketStatus getStatus() {
@@ -59,25 +57,25 @@ public class Ticket {
     public TicketPrioridade getPrioridade() {
         return prioridade;
     }
-    public void setPrioridade(TicketPrioridade prioridade) {
+    private void setPrioridade(TicketPrioridade prioridade) {
         this.prioridade = prioridade;
     }
     public UUID getClienteId() {
         return clienteId;
     }
-    public void setClienteId(UUID clienteId) {
+    private void setClienteId(UUID clienteId) {
         this.clienteId = clienteId;
     }
     public UUID getAnalistaId() {
         return analistaId;
     }
-    public void setAnalistaId(UUID analistaId) {
+    private void setAnalistaId(UUID analistaId) {
         this.analistaId = analistaId;
     }
     public Instant getCriadoEm() {
         return criadoEm;
     }
-    public void setCriadoEm(Instant criadoEm) {
+    private void setCriadoEm(Instant criadoEm) {
         this.criadoEm = criadoEm;
     }
     public Instant getAtualizadoEm() {
@@ -108,50 +106,147 @@ public class Ticket {
 
     
 
-    public UUID atribuirAnalista(UUID analistaId) {
+    public void atribuirAnalista(UUID analistaId) {
+        if (analistaId == null) {
+            throw new IllegalArgumentException("O ID do analista não pode ser nulo.");
+        }
+
+        if (this.analistaId != null) {
+            throw new IllegalStateException("O ticket já possui um analista atribuído.");
+        }
+
+        if (this.status == TicketStatus.FECHADO ||
+            this.status == TicketStatus.RESOLVIDO ||
+            this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível atribuir um analista a um ticket encerrado ou resolvido.");
+        }
+
         this.analistaId = analistaId;
-        return this.analistaId;
-    }
-
-    public Instant iniciarAtendimento() {
-        this.status = TicketStatus.EM_ANDAMENTO;
         this.atualizadoEm = Instant.now();
-        return this.atualizadoEm;
     }
 
-    public Instant fecharTicket() {
+    public void iniciarAtendimento() {
+
+        if(this.status == TicketStatus.FECHADO || this.status == TicketStatus.RESOLVIDO || this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível iniciar o atendimento de um ticket fechado ou resolvido.");
+        } 
+            this.status = TicketStatus.EM_ANDAMENTO;
+            this.atualizadoEm = Instant.now();
+
+        
+    }
+
+    public void fecharTicket() {
+        if(this.status != TicketStatus.RESOLVIDO && this.status != TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível fechar um ticket que não foi resolvido.");
+        }
         this.status = TicketStatus.FECHADO;
         this.fechadoEm = Instant.now();
-        return this.fechadoEm;
+        this.atualizadoEm = Instant.now();
     }
     public void atualizarTicket(String titulo, String descricao, TicketPrioridade prioridade) {
         this.titulo = titulo;
         this.descricao = descricao;
         this.prioridade = prioridade;
         this.atualizadoEm = Instant.now();
-        return this.atualizadoEm;
     }
 
-    public Instant aguardarCliente(){
+    public void aguardarCliente(){
+        if(this.status != TicketStatus.EM_ANDAMENTO) {
+            throw new IllegalStateException("Não é possível aguardar o cliente de um ticket que não está em andamento.");
+        }
         this.status = TicketStatus.AGUARDANDO_CLIENTE;
+        this.aguardandoClienteEm = Instant.now();
         this.atualizadoEm = Instant.now();
-        return this.atualizadoEm;
     }
 
-    public Instant aguardarAnalista(){
+    public void aguardarAnalista(){
+        if(this.status != TicketStatus.EM_ANDAMENTO) {
+            throw new IllegalStateException("Não é possível aguardar o analista de um ticket que não está em andamento.");
+        }
         this.status = TicketStatus.AGUARDANDO_ANALISTA;
         this.atualizadoEm = Instant.now();
-        return this.atualizadoEm;
     }
-    public Instant resolver(){
+    public void resolver(){
+        Instant agora = Instant.now();
+
+        if (this.status != TicketStatus.EM_ANDAMENTO) {
+            throw new IllegalStateException("Não é possível resolver um ticket que não está em andamento.");
+        }
         this.status = TicketStatus.RESOLVIDO;
-        this.atualizadoEm = Instant.now();
-        return this.atualizadoEm;
+        this.atualizadoEm = agora;
+        this.resolvidoEm = agora;
+        
     }
-    public TicketPrioridade atualizarPrioridade(TicketPrioridade prioridade) {
+    public void alterarPrioridade(TicketPrioridade prioridade) {
+        if(this.status == TicketStatus.FECHADO || this.status == TicketStatus.RESOLVIDO || this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível atualizar a prioridade de um ticket fechado ou resolvido.");
+        }
+        if(prioridade == null) {
+            throw new IllegalArgumentException("A prioridade não pode ser nula.");
+        }
+        if(this.prioridade == prioridade) {
+            throw new IllegalArgumentException("A prioridade do ticket já é " + prioridade + ".");
+        }
+        
         this.prioridade = prioridade;
         this.atualizadoEm = Instant.now();
-        return this.prioridade;
     }
+
+    public void retomarAtendimento(){
+        if(this.status != TicketStatus.AGUARDANDO_CLIENTE && this.status != TicketStatus.AGUARDANDO_ANALISTA) {
+            throw new IllegalStateException("Não é possível retomar o atendimento de um ticket que não está aguardando cliente ou analista.");
+        }
+        this.status = TicketStatus.EM_ANDAMENTO;
+        this.atualizadoEm = Instant.now();
+        
+    }
+
+    public void removerAnalista() {
+        if (this.analistaId == null) {
+            throw new IllegalStateException("Não é possível remover um analista de um ticket que não possui um analista atribuído.");
+        }
+        if(this.status == TicketStatus.FECHADO || this.status == TicketStatus.RESOLVIDO || this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível remover um analista de um ticket fechado ou resolvido.");
+        }
+        this.analistaId = null;
+        this.atualizadoEm = Instant.now();
+    }
+
+    public void alterarDescricao(String descricao) {
+        if(this.status == TicketStatus.FECHADO || this.status == TicketStatus.RESOLVIDO || this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível atualizar a descrição de um ticket fechado ou resolvido.");
+        }
+        if(descricao == null || descricao.isBlank()) {
+            throw new IllegalArgumentException("A descrição não pode ser nula ou vazia.");
+        }
+
+        if(this.descricao.equals(descricao)) {
+            throw new IllegalArgumentException("A descrição do ticket já é a mesma.");
+        }
+        this.descricao = descricao;
+        this.atualizadoEm = Instant.now();
+    }
+
+    
+    public void alterarTitulo(String titulo) {
+        if (titulo == null || titulo.isBlank()) {
+            throw new IllegalArgumentException("O título não pode ser nulo ou vazio.");
+        }
+
+        if (this.status == TicketStatus.FECHADO ||
+            this.status == TicketStatus.RESOLVIDO ||
+            this.status == TicketStatus.AUTO_RESOLVIDO) {
+            throw new IllegalStateException("Não é possível atualizar o título de um ticket fechado ou resolvido.");
+        }
+
+        if (this.titulo.equals(titulo)) {
+            throw new IllegalArgumentException("O título do ticket já é o mesmo.");
+        }
+
+        this.titulo = titulo;
+        this.atualizadoEm = Instant.now();
+    }
+
     
 }
