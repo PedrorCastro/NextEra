@@ -17,7 +17,7 @@ public class Ticket {
     private Instant aguardandoClienteEm;
 
     public Ticket(String titulo, String descricao,
-                TicketStatus status, TicketPrioridade prioridade,
+                TicketPrioridade prioridade,
                 UUID clienteId) {
         this.id = UUID.randomUUID();
         this.titulo = titulo;
