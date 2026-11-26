@@ -1,5 +1,7 @@
 package com.nextera.domain.model;
 import java.util.UUID;
+import java.util.regex.Pattern;
+
 
 public class Cliente {
 
@@ -11,12 +13,17 @@ public class Cliente {
 
 	private String telefone;
 
+	private static final Pattern EMAIL_PATTERN = Pattern.compile(
+		"^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$"
+	);
 
-	public Cliente(String nome, String telefone) {
+
+	public Cliente(String nome, String telefone, String email) {
 		this.id = UUID.randomUUID();
         validarNome(nome);
         this.nome = nome;
-		this.email = null;
+		validarEmail(email);
+		this.email = email;
 		this.telefone = telefone;
 	}
 
@@ -46,9 +53,7 @@ public class Cliente {
     }
 
     public void alterarEmail(String email) {
-        if(email == null || email.isBlank()) {
-            throw new IllegalArgumentException("Email não pode ser nulo ou vazio");
-        }
+        validarEmail(email);
         this.email = email;
     }
 
@@ -58,7 +63,16 @@ public class Cliente {
 
     private void validarNome(String nome) {
     if (nome == null || nome.isBlank()) {
-        throw new IllegalArgumentException("Nome não pode ser nulo ou vazio.");
-    }
-}
+        	throw new IllegalArgumentException("Nome não pode ser nulo ou vazio.");
+    	}
+	}
+	private void validarEmail(String email) {
+		if (email == null || email.isBlank()) {
+			throw new IllegalArgumentException("Email não pode ser nulo ou vazio.");
+		}
+
+		if (!EMAIL_PATTERN.matcher(email).matches()) {
+			throw new IllegalArgumentException("Formato de email inválido.");
+		}
+	}
 }
