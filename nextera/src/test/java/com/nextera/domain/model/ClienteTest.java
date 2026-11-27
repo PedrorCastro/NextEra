@@ -30,9 +30,32 @@ public class ClienteTest {
 	}
 
 	@Test
+	public void deveRejeitarNomeNuloOuComEspacos() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			new Cliente(null, "123456789", "teste@teste.com");
+		});
+		assertThrows(IllegalArgumentException.class, () -> {
+			new Cliente("   ", "123456789", "teste@teste.com");
+		});
+	}
+
+	@Test
 	public void deveLancarExcecaoQuandoEmailForInvalido() {
 		assertThrows(IllegalArgumentException.class, () -> {
 			new Cliente("João da Silva", "123456789", "email-invalido.com");
+		});
+	}
+
+	@Test
+	public void deveRejeitarEmailNuloOuVazio() {
+		assertThrows(IllegalArgumentException.class, () -> {
+			new Cliente("João da Silva", "123456789", null);
+		});
+		assertThrows(IllegalArgumentException.class, () -> {
+			new Cliente("João da Silva", "123456789", "");
+		});
+		assertThrows(IllegalArgumentException.class, () -> {
+			new Cliente("João da Silva", "123456789", "   ");
 		});
 	}
 
@@ -47,5 +70,14 @@ public class ClienteTest {
 		assertEquals("Maria Souza", cliente.getNome());
 		assertEquals("987654321", cliente.getTelefone());
 		assertEquals("maria@teste.com", cliente.getEmail());
+	}
+
+	@Test
+	public void deveManterEmailAnteriorQuandoNovaAlteracaoForInvalida() {
+		Cliente cliente = new Cliente("João da Silva", "123456789", "teste@teste.com");
+
+		assertThrows(IllegalArgumentException.class, () -> cliente.alterarEmail("email-invalido.com"));
+
+		assertEquals("teste@teste.com", cliente.getEmail());
 	}
 }

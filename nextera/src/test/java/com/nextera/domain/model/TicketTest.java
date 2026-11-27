@@ -175,4 +175,18 @@ public class TicketTest {
         assertEquals(TicketPrioridade.ALTA, ticket.getPrioridade());
 
     }
+
+    @Test
+    public void deveLancarExcecaoAoRemoverAnalistaNaoAtribuido() {
+        assertThrows(IllegalStateException.class, () -> ticket.removerAnalista());
+    }
+
+    @Test
+    public void deveImpedirInicioDeAtendimentoEnquantoAguardaCliente() {
+        ticket.iniciarAtendimento();
+        ticket.aguardarCliente();
+
+        assertThrows(IllegalStateException.class, () -> ticket.iniciarAtendimento());
+        assertEquals(TicketStatus.AGUARDANDO_CLIENTE, ticket.getStatus());
+    }
 }
