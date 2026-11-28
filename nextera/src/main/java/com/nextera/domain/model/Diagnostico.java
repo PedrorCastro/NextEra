@@ -19,22 +19,22 @@ public class Diagnostico {
 
 
     public Diagnostico(
-    UUID clienteId,
-    String descricaoProblema,
-    String moduloSistema,
-    String codigoErro
+        UUID clienteId,
+        String descricaoProblema,
+        String moduloSistema,
+        String codigoErro
     ) {
         this.id = UUID.randomUUID();
-        this.clienteId = clienteId;
-        this.descricaoProblema = descricaoProblema;
-        this.moduloSistema = moduloSistema;
+        this.clienteId = validaClienteId(clienteId);
+        this.descricaoProblema = validarTextoObrigatorio(
+            descricaoProblema, "A descricaoProblema do diagnóstico não pode ser nula ou vazia."
+        );
+        this.moduloSistema = validarTextoObrigatorio(
+            moduloSistema, "O moduloSistema do diagnóstico não pode ser nulo ou vazio."
+        );
         this.codigoErro = codigoErro;
         this.status = DiagnosticoStatus.RECEBIDO;
-        this.resultado = null;
-        this.detalhes = null;
-        this.ticketId = null;
         this.criadoEm = Instant.now();
-        this.concluidoEm = null;
     }
 
     public void iniciarAnalise(){
@@ -60,24 +60,27 @@ public class Diagnostico {
         if(this.status != DiagnosticoStatus.EM_ANALISE) {
             throw new IllegalStateException("O diagnóstico só pode registrar falha se estiver no status EM_ANALISE.");
         }
+        validarTextoObrigatorio(detalhes, "Os detalhes da falha não podem ser nulos ou vazios.");
         this.status = DiagnosticoStatus.FALHA;
         this.detalhes = detalhes;
         this.concluidoEm = Instant.now();
     }
 
-    public void vincularTicket(UUID ticketId){
-        if(this.status != DiagnosticoStatus.CONCLUIDO) {
+    public void vincularTicket(UUID ticketId) {
+        if (this.status != DiagnosticoStatus.CONCLUIDO) {
             throw new IllegalStateException("O diagnóstico só pode vincular um ticket se estiver no status CONCLUIDO.");
         }
-        if(ticketId == null) {
+        if (this.ticketId != null) {
+            throw new IllegalStateException("O diagnóstico já possui um ticket vinculado.");
+        }
+        if (ticketId == null) {
             throw new IllegalArgumentException("O ticketId não pode ser nulo.");
         }
-        if(this.resultado == ResultadoDiagnostico.RESOLVIDO_AUTOMATICAMENTE) {
-            throw new IllegalStateException("O diagnóstico não pode vincular um ticket se o resultado for RESOLVIDO_AUTOMATICAMENTE.");
-        }
-        
-        if(this.resultado == null){
+        if (this.resultado == null) {
             throw new IllegalStateException("O diagnóstico não pode vincular um ticket se o resultado for nulo.");
+        }
+        if (this.resultado == ResultadoDiagnostico.RESOLVIDO_AUTOMATICAMENTE) {
+            throw new IllegalStateException("O diagnóstico não pode vincular um ticket se o resultado for RESOLVIDO_AUTOMATICAMENTE.");
         }
 
         this.ticketId = ticketId;
@@ -90,5 +93,58 @@ public class Diagnostico {
     public Instant getConcluidoEm() {
         return concluidoEm;
     }
+    public UUID getId() {
+        return id;
+    }
+    
+    public UUID getClienteId() {
+        return clienteId;
+    }
+
+    public String getDescricaoProblema() {
+        return descricaoProblema;
+    }
+
+    public String getModuloSistema() {
+        return moduloSistema;
+    }
+
+    public String getCodigoErro() {
+        return codigoErro;
+    }
+
+    public ResultadoDiagnostico getResultado() {
+        return resultado;
+    }
+
+    public String getDetalhes() {
+        return detalhes;
+    }
+
+    public UUID getTicketId() {
+        return ticketId;
+    }
+
+    public Instant getCriadoEm() {
+        return criadoEm;
+    }
+
+
+    private UUID validaClienteId(UUID clienteId) {
+        if (clienteId == null) {
+            throw new IllegalArgumentException("O clienteId do diagnóstico não pode ser nulo.");
+        }
+        return clienteId;
+    }
+
+    private String validarTextoObrigatorio(String valor, String mensagem) {
+        if (valor == null || valor.isBlank()) {
+            throw new IllegalArgumentException(mensagem);
+        }
+        return valor;
+    }
+
+  
+
 
 }

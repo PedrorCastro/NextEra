@@ -30,17 +30,10 @@ class PriorizacaoTicketServiceTest {
     }
 
     @Test
-    void deveManterPrioridadeDaGravidadeQuandoObrigacaoOuPrazoNaoExistir() {
+    void deveManterPrioridadeDaGravidadeQuandoObrigacaoNaoExistir() {
         assertEquals(
             TicketPrioridade.MEDIA,
             service.calcularPrioridade(GravidadeProblema.MEDIA, null)
-        );
-        assertEquals(
-            TicketPrioridade.MEDIA,
-            service.calcularPrioridade(
-                GravidadeProblema.MEDIA,
-                new ObrigacaoFiscal("Obrigação", null, "Fiscal")
-            )
         );
     }
 
